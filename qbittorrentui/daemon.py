@@ -1,31 +1,32 @@
 import logging
 import os
 import queue
-from attrdict import AttrDict
 import threading
-from time import time
 from copy import deepcopy
+from time import time
 
-from qbittorrentui.debug import log_timing
+from qbittorrentui._attrdict import AttrDict
 from qbittorrentui.config import config
 from qbittorrentui.connector import Connector
 from qbittorrentui.connector import ConnectorError
+from qbittorrentui.debug import log_timing
+from qbittorrentui.events import connection_to_server_status
+from qbittorrentui.events import reset_daemons
+from qbittorrentui.events import run_server_command
+from qbittorrentui.events import server_details_changed
 from qbittorrentui.events import server_state_changed
 from qbittorrentui.events import server_torrents_changed
 from qbittorrentui.events import update_torrent_list_now
 from qbittorrentui.events import update_torrent_window_now
-from qbittorrentui.events import server_details_changed
-from qbittorrentui.events import run_server_command
 from qbittorrentui.events import update_ui_from_daemon
-from qbittorrentui.events import connection_to_server_status
-from qbittorrentui.events import reset_daemons
 
 logger = logging.getLogger(__name__)
 
 
 class DaemonManager(threading.Thread):
     """
-    Background daemon manager. Responsible for stopping and starting daemons, providing daemon interfaces to UI, and facilitate signaling of the UI.
+    Background daemon manager. Responsible for stopping and starting daemons,
+    providing daemon interfaces to UI, and facilitate signaling of the UI.
 
     :param torrent_client:
     :param daemon_signal_fd:

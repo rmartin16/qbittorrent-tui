@@ -3,7 +3,6 @@ import urwid as uw
 from qbittorrentui.formatters import natural_file_size
 
 
-# noinspection PyMissingConstructor
 class ButtonWithoutCursor(uw.Button):
     button_left = "["
     button_right = "]"
@@ -32,7 +31,11 @@ class DownloadProgressBar(uw.ProgressBar):
     def __init__(self, normal, complete, current=0, done=100, satt=None):
         if done == 0:
             done = 100
-        super(DownloadProgressBar, self).__init__(normal=normal, complete=complete, current=current, done=done, satt=satt)
+        super(DownloadProgressBar, self).__init__(normal=normal,
+                                                  complete=complete,
+                                                  current=current,
+                                                  done=done,
+                                                  satt=satt)
 
     def get_text(self):
         return "%s %s" % (natural_file_size(self.current, gnu=True).rjust(7),
@@ -48,6 +51,7 @@ class DownloadProgressBar(uw.ProgressBar):
 
 class SelectableText(uw.Text):
     _selectable = True
+
     @staticmethod
     def keypress(_, key):
         return key

@@ -1,21 +1,21 @@
-import urwid as uw
 import logging
-from attrdict import AttrDict
-import blinker
+import os
 from datetime import datetime
 from time import time
 
-import os
+import blinker
+import urwid as uw
 
+from qbittorrentui._attrdict import AttrDict
+from qbittorrentui.config import config
+from qbittorrentui.connector import Connector
 from qbittorrentui.debug import log_keypress
 from qbittorrentui.debug import log_timing
-from qbittorrentui.config import config
-from qbittorrentui.misc_widgets import DownloadProgressBar
-from qbittorrentui.misc_widgets import SelectableText
-from qbittorrentui.connector import Connector
+from qbittorrentui.events import torrent_window_tab_change
 from qbittorrentui.formatters import natural_file_size
 from qbittorrentui.formatters import pretty_time_delta
-from qbittorrentui.events import torrent_window_tab_change
+from qbittorrentui.misc_widgets import DownloadProgressBar
+from qbittorrentui.misc_widgets import SelectableText
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +36,13 @@ class TorrentWindow(uw.Columns):
         columns_list = [(uw.WEIGHT, 10, self.tabs_column_w),
                         (uw.WEIGHT, 90, self.content_column)]
 
-        super(TorrentWindow, self).__init__(columns_list, dividechars=3, focus_column=0,
-                                            min_width=15, box_columns=None)
+        super(TorrentWindow, self).__init__(
+            columns_list,
+            dividechars=3,
+            focus_column=0,
+            min_width=15,
+            box_columns=None
+        )
 
         self.main = main
         self.torrent = torrent
@@ -52,9 +57,10 @@ class TorrentWindow(uw.Columns):
         if tab is None:
             return
         self.content_column = self.tabs[tab]
-        self.contents[1] = (self.content_column,
-                            self.options(width_type=uw.WEIGHT, width_amount=90, box_widget=False)
-                            )
+        self.contents[1] = (
+            self.content_column,
+            self.options(width_type=uw.WEIGHT, width_amount=90, box_widget=False)
+        )
 
     def keypress(self, size, key):
         log_keypress(logger, self, key)
@@ -77,11 +83,15 @@ class TorrentTabsDisplay(uw.ListBox):
         for i, tab_name in enumerate(tabs):
             tabs_list_for_walker.extend(
                 [
-                    uw.AttrMap(SelectableText(tab_name,
-                                              align=uw.CENTER,
-                                              wrap=uw.CLIP),
-                               '',
-                               focus_map='selected'),
+                    uw.AttrMap(
+                        SelectableText(
+                            tab_name,
+                            align=uw.CENTER,
+                            wrap=uw.CLIP
+                        ),
+                        '',
+                        focus_map='selected'
+                    ),
                     uw.Text("")
                 ]
             )
@@ -406,11 +416,13 @@ class GeneralDisplay(uw.ListBox):
 
     class TorrentWindowGeneralTabValueContainer(uw.Columns):
         def __init__(self, data_elements: list, caption: str, format_func, source: str = "properties"):
-            super(GeneralDisplay.TorrentWindowGeneralTabValueContainer, self).__init__([],
-                                                                                       dividechars=1,
-                                                                                       focus_column=None,
-                                                                                       min_width=1,
-                                                                                       box_columns=None)
+            super(GeneralDisplay.TorrentWindowGeneralTabValueContainer, self).__init__(
+                [],
+                dividechars=1,
+                focus_column=None,
+                min_width=1,
+                box_columns=None
+            )
             self.data_elements = data_elements
             self.source = source  # torrent or properties
             self.caption = caption
@@ -435,8 +447,14 @@ class GeneralDisplay(uw.ListBox):
             self.contents.clear()
             self.contents.extend(
                 [
-                    (left_column, self.options(width_type=uw.PACK, width_amount=50, box_widget=False)),
-                    (right_column, self.options(width_type=uw.PACK, width_amount=50, box_widget=False))
+                    (
+                        left_column,
+                        self.options(width_type=uw.PACK, width_amount=50, box_widget=False)
+                    ),
+                    (
+                        right_column,
+                        self.options(width_type=uw.PACK, width_amount=50, box_widget=False)
+                    )
                 ]
             )
 
@@ -763,7 +781,17 @@ class ContentDisplay(uw.Pile):
             dividechars=1,
         )
 
-        self.walker = uw.TreeWalker(ContentDisplay.DirectoryNode(content=ContentDisplay.Content(self.client, torrent_hash="", content={}, collapsed_dirs=[]), path='/'))
+        self.walker = uw.TreeWalker(
+            ContentDisplay.DirectoryNode(
+                content=ContentDisplay.Content(
+                    self.client,
+                    torrent_hash="",
+                    content={},
+                    collapsed_dirs=[]
+                ),
+                path='/'
+            )
+        )
         self.tree_w = uw.TreeListBox(self.walker)
         w_list = [(1, self.title_bar), self.tree_w]
 
@@ -787,8 +815,10 @@ class ContentDisplay(uw.Pile):
         except TypeError:
             pass
 
-        node = self.focused_node_class(content=content,
-                                       path=self.focused_path if self.focused_path is not None else content.root_dir())
+        node = self.focused_node_class(
+            content=content,
+            path=self.focused_path if self.focused_path is not None else content.root_dir()
+        )
         self.walker.set_focus(node)
 
         log_timing(logger, "Updating", self, sender, start_time)
@@ -818,9 +848,11 @@ class ContentDisplay(uw.Pile):
 
                 # build tree data
                 if c_name:
-                    self._add_node_or_leaf(content_list=self._content_tree['children'],
-                                           name=c_name,
-                                           content=c)
+                    self._add_node_or_leaf(
+                        content_list=self._content_tree['children'],
+                        name=c_name,
+                        content=c
+                    )
 
         def list_dir(self, path):
             children = self.children_for_path(path)

@@ -26,6 +26,7 @@ class Configuration(configparser.ConfigParser):
 
 # CONSTANTS
 APPLICATION_NAME = 'qBittorrenTUI'
+
 STATE_MAP_FOR_DISPLAY = {'pausedUP': 'Completed',
                          'uploading': 'Seeding',
                          'stalledUP': 'Seeding',
@@ -45,6 +46,7 @@ STATE_MAP_FOR_DISPLAY = {'pausedUP': 'Completed',
                          'error': 'Error',
                          'queuedForChecking': 'Queued for Checking',
                          'checkingResumeData': 'Checking Resume Data'}
+
 TORRENT_LIST_FILTERING_STATE_MAP = {
     'downloading': [
         'downloading',

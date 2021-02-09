@@ -1,25 +1,26 @@
-import urwid as uw
 import logging
-from attrdict import AttrDict
-import panwid
 from time import time
 
-from qbittorrentui.windows.torrent import TorrentWindow
-from qbittorrentui.debug import log_keypress
-from qbittorrentui.debug import log_timing
-from qbittorrentui.config import config
+import panwid
+import urwid as uw
+
+from qbittorrentui._attrdict import AttrDict
 from qbittorrentui.config import STATE_MAP_FOR_DISPLAY
 from qbittorrentui.config import TORRENT_LIST_FILTERING_STATE_MAP
+from qbittorrentui.config import config
+from qbittorrentui.connector import Connector
+from qbittorrentui.debug import log_keypress
+from qbittorrentui.debug import log_timing
+from qbittorrentui.events import initialize_torrent_list
+from qbittorrentui.events import refresh_torrent_list_now
+from qbittorrentui.events import server_torrents_changed
+from qbittorrentui.events import update_torrent_list_now
+from qbittorrentui.formatters import natural_file_size
+from qbittorrentui.formatters import pretty_time_delta
 from qbittorrentui.misc_widgets import ButtonWithoutCursor
 from qbittorrentui.misc_widgets import DownloadProgressBar
 from qbittorrentui.misc_widgets import SelectableText
-from qbittorrentui.connector import Connector
-from qbittorrentui.formatters import natural_file_size
-from qbittorrentui.formatters import pretty_time_delta
-from qbittorrentui.events import refresh_torrent_list_now
-from qbittorrentui.events import update_torrent_list_now
-from qbittorrentui.events import initialize_torrent_list
-from qbittorrentui.events import server_torrents_changed
+from qbittorrentui.windows.torrent import TorrentWindow
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +83,7 @@ class TorrentListWindow(uw.Pile):
                                                valign=uw.MIDDLE,
                                                width=(uw.RELATIVE, 50),
                                                height=(uw.RELATIVE, 50),
-                                               min_width=20
-                                               )
+                                               min_width=20)
         return key
 
     def torrent_list_init(self, sender):
@@ -311,8 +311,7 @@ class TorrentRow(uw.Pile):
         # build and populate new torrent row
         self.torrent_row_columns_w = uw.AttrMap(w=TorrentRowColumns(),
                                                 attr_map=attr,
-                                                focus_map='selected'
-                                                )
+                                                focus_map='selected')
         # store hash
         self.set_torrent_hash(torrent_hash)
         # build row widget
@@ -381,14 +380,14 @@ class TorrentRow(uw.Pile):
         torrent_window = TorrentWindow(self.main,
                                        torrent_hash=self.get_torrent_hash(),
                                        torrent=self.cached_torrent,
-                                       client=self.torrent_list_box_w.client,
-                                       )
-        header_w = uw.Pile([uw.Divider(),
-                            uw.Text(self.cached_torrent['name'], align=uw.CENTER, wrap=uw.CLIP),
-                            ]
-                           )
-        frame_w = uw.Frame(body=torrent_window,
-                           header=header_w)
+                                       client=self.torrent_list_box_w.client)
+        header_w = uw.Pile(
+            [
+                uw.Divider(),
+                uw.Text(self.cached_torrent['name'], align=uw.CENTER, wrap=uw.CLIP)
+            ]
+        )
+        frame_w = uw.Frame(body=torrent_window, header=header_w)
         self.main.app_window.body = frame_w
 
     def keypress(self, size, key):
@@ -530,10 +529,12 @@ class TorrentRowColumns(uw.Columns):
     class TorrentInfoColumnPBContainer(DownloadProgressBar):
         def __init__(self, name, current, done=100):
             self.name = name
-            super(TorrentRowColumns.TorrentInfoColumnPBContainer, self).__init__('pg normal',
-                                                                                 'pg complete',
-                                                                                 current=current,
-                                                                                 done=done if done != 0 else 100)
+            super(TorrentRowColumns.TorrentInfoColumnPBContainer, self).__init__(
+                'pg normal',
+                'pg complete',
+                current=current,
+                done=done if done != 0 else 100
+            )
 
         def __len__(self):
             return len(self.get_pb_text())
@@ -555,9 +556,7 @@ class TorrentListTabsColumns(uw.Columns):
                 ["All", "Downloading", "Completed", "Paused", "Active", "Inactive", "Resumed"]):
             torrent_tabs_list.append(
                 uw.AttrMap(
-                    uw.Filler(
-                        SelectableText(tab_name,
-                                       align=uw.CENTER)),
+                    uw.Filler(SelectableText(tab_name,align=uw.CENTER)),
                     attr_map="selected" if i == 0 else "",
                     focus_map='selected')
             )
@@ -833,12 +832,28 @@ class TorrentOptionsDialog(uw.ListBox):
                             uw.Columns(
                                 [
                                     uw.Padding(uw.Text('')),
-                                    (6, uw.AttrMap(ButtonWithoutCursor("OK",
-                                                                       on_press=self.confirm_delete),
-                                                   '', focus_map='selected')),
-                                    (10, uw.AttrMap(ButtonWithoutCursor("Cancel",
-                                                                        on_press=self.close_delete_dialog),
-                                                    '', focus_map='selected'))
+                                    (
+                                        6,
+                                        uw.AttrMap(
+                                            ButtonWithoutCursor(
+                                                "OK",
+                                                on_press=self.confirm_delete
+                                            ),
+                                            '',
+                                            focus_map='selected'
+                                        )
+                                     ),
+                                    (
+                                        10,
+                                        uw.AttrMap(
+                                            ButtonWithoutCursor(
+                                                "Cancel",
+                                                on_press=self.close_delete_dialog
+                                            ),
+                                            '',
+                                            focus_map='selected'
+                                        )
+                                    )
                                 ],
                                 dividechars=2,
                             ),
@@ -934,12 +949,28 @@ class TorrentAddDialog(uw.ListBox):
                     uw.Columns(
                         [
                             uw.Padding(uw.Text('')),
-                            (6, uw.AttrMap(ButtonWithoutCursor("OK",
-                                                               on_press=self.add_torrent),
-                                           '', focus_map='selected')),
-                            (10, uw.AttrMap(ButtonWithoutCursor("Cancel",
-                                                                on_press=self.close_window),
-                                            '', focus_map='selected'))
+                            (
+                                6,
+                                uw.AttrMap(
+                                    ButtonWithoutCursor(
+                                        "OK",
+                                        on_press=self.add_torrent
+                                    ),
+                                    '',
+                                    focus_map='selected'
+                                )
+                            ),
+                            (
+                                10,
+                                uw.AttrMap(
+                                    ButtonWithoutCursor(
+                                        "Cancel",
+                                        on_press=self.close_window
+                                    ),
+                                    '',
+                                    focus_map='selected'
+                                )
+                            )
                         ],
                         dividechars=2,
                     ),

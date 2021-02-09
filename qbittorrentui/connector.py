@@ -3,6 +3,7 @@ from functools import wraps
 
 from qbittorrentapi import Client as qbt_Client
 from qbittorrentapi import exceptions as qbt_exceptions
+
 from qbittorrentui.events import run_server_command
 
 

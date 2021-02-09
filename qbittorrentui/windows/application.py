@@ -1,21 +1,22 @@
-import urwid as uw
 import logging
 from time import time
 
-from qbittorrentui.windows.torrent_list import TorrentListWindow
+import urwid as uw
+
 from qbittorrentui.config import APPLICATION_NAME
 from qbittorrentui.config import config
-from qbittorrentui.debug import log_keypress
-from qbittorrentui.debug import log_timing
-from qbittorrentui.misc_widgets import ButtonWithoutCursor
 from qbittorrentui.connector import ConnectorError
 from qbittorrentui.connector import LoginFailed
-from qbittorrentui.formatters import natural_file_size
+from qbittorrentui.debug import log_keypress
+from qbittorrentui.debug import log_timing
+from qbittorrentui.events import exit_tui
 from qbittorrentui.events import initialize_torrent_list
 from qbittorrentui.events import reset_daemons
 from qbittorrentui.events import server_details_changed
 from qbittorrentui.events import server_state_changed
-from qbittorrentui.events import exit_tui
+from qbittorrentui.formatters import natural_file_size
+from qbittorrentui.misc_widgets import ButtonWithoutCursor
+from qbittorrentui.windows.torrent_list import TorrentListWindow
 
 logger = logging.getLogger(__name__)
 
@@ -37,19 +38,26 @@ class AppWindow(uw.Frame):
     def keypress(self, size, key):
         log_keypress(logger, self, key)
         if key in ['n', 'N']:
-            self.main.loop.widget = uw.Overlay(top_w=uw.LineBox(ConnectDialog(self.main)),
-                                               bottom_w=self.main.loop.widget,
-                                               align=uw.CENTER,
-                                               width=(uw.RELATIVE, 50),
-                                               valign=uw.MIDDLE,
-                                               height=(uw.RELATIVE, 50))
+            self.main.loop.widget = uw.Overlay(
+                top_w=uw.LineBox(ConnectDialog(self.main)),
+                bottom_w=self.main.loop.widget,
+                align=uw.CENTER,
+                width=(uw.RELATIVE, 50),
+                valign=uw.MIDDLE,
+                height=(uw.RELATIVE, 50)
+            )
         return super(AppWindow, self).keypress(size, key)
 
 
 class AppTitleBar(uw.Text):
     def __init__(self):
         """Application title bar."""
-        super(AppTitleBar, self).__init__(markup=APPLICATION_NAME, align=uw.CENTER, wrap=uw.CLIP, layout=None)
+        super(AppTitleBar, self).__init__(
+            markup=APPLICATION_NAME,
+            align=uw.CENTER,
+            wrap=uw.CLIP,
+            layout=None
+        )
         self.refresh("title bar init")
         server_details_changed.connect(receiver=self.refresh)
 
@@ -88,7 +96,7 @@ class AppStatusBar(uw.Columns):
         column_w_list = [
             (uw.PACK, self.left_column),
             (uw.WEIGHT, 1, self.right_column)
-            ]
+        ]
         super(AppStatusBar, self).__init__(widget_list=column_w_list, dividechars=1, focus_column=None,
                                            min_width=1, box_columns=None)
         self.refresh("status bar init")
@@ -175,12 +183,28 @@ class ConnectDialog(uw.ListBox):
                 # uw.Divider(),
                 uw.Columns([
                     uw.Padding(uw.Text("")),
-                    (6, uw.AttrMap(ButtonWithoutCursor("OK",
-                                                       on_press=self.apply_settings),
-                                   '', focus_map='selected')),
-                    (10, uw.AttrMap(ButtonWithoutCursor("Cancel",
-                                                        on_press=self.close_dialog),
-                                    '', focus_map='selected')),
+                    (
+                        6,
+                        uw.AttrMap(
+                            ButtonWithoutCursor(
+                                "OK",
+                                on_press=self.apply_settings
+                            ),
+                            '',
+                            focus_map='selected'
+                        )
+                    ),
+                    (
+                        10,
+                        uw.AttrMap(
+                            ButtonWithoutCursor(
+                                "Cancel",
+                                on_press=self.close_dialog
+                            ),
+                            '',
+                            focus_map='selected'
+                        )
+                    ),
                     uw.Padding(uw.Text("")),
                 ], dividechars=3),
                 uw.Divider(),

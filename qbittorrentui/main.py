@@ -1,23 +1,22 @@
-import urwid as uw
 import logging
-import blinker
-from time import time, sleep
 from os import environ
+from time import time, sleep
 
-from qbittorrentui.connector import Connector
-from qbittorrentui.connector import ConnectorError
-from qbittorrentui.windows.application import AppWindow
-from qbittorrentui.windows.application import ConnectDialog
+import blinker
+import urwid as uw
+
 from qbittorrentui.config import APPLICATION_NAME
 from qbittorrentui.config import config
+from qbittorrentui.connector import Connector
 from qbittorrentui.daemon import DaemonManager
-from qbittorrentui.events import initialize_torrent_list
+from qbittorrentui.events import connection_to_server_acquired
+from qbittorrentui.events import connection_to_server_lost
+from qbittorrentui.events import exit_tui
 from qbittorrentui.events import server_details_changed
 from qbittorrentui.events import server_state_changed
 from qbittorrentui.events import server_torrents_changed
-from qbittorrentui.events import connection_to_server_lost
-from qbittorrentui.events import connection_to_server_acquired
-from qbittorrentui.events import exit_tui
+from qbittorrentui.windows.application import AppWindow
+from qbittorrentui.windows.application import ConnectDialog
 
 try:
     logging.basicConfig(level=logging.INFO,
@@ -82,7 +81,8 @@ class TorrentServer:
                     # tell urwid loop to close the read end of the pipe...daemon will close write end
                     return False
                 else:
-                    logger.info("Received unknown signal from daemon: sender: %s signal: %s" % (sender, signal), exc_info=True)
+                    logger.info("Received unknown signal from daemon: "
+                                "sender: %s signal: %s" % (sender, signal), exc_info=True)
             return True
 
     def update_details(self):
@@ -178,7 +178,8 @@ class Main(object):
 
     def connection_lost(self, sender):
         logger.info("Connection lost...")
-        self.loop.widget = uw.Overlay(top_w=uw.LineBox(ConnectDialog(self, error_message="Connection lost...attempting automatic reconnection")),
+        connect_dialog_w = ConnectDialog(self, error_message="Connection lost...attempting automatic reconnection")
+        self.loop.widget = uw.Overlay(top_w=uw.LineBox(connect_dialog_w),
                                       bottom_w=self.loop.widget,
                                       align=uw.CENTER,
                                       width=(uw.RELATIVE, 50),
@@ -281,7 +282,8 @@ class Main(object):
     def _show_application(self):
         logger.info("Showing %s" % APPLICATION_NAME)
         self.app_window = AppWindow(main=self)
-        self.loop.widget = uw.Overlay(top_w=uw.LineBox(ConnectDialog(main=self, support_auto_connect=True)),
+        connect_dialog_w = ConnectDialog(main=self, support_auto_connect=True)
+        self.loop.widget = uw.Overlay(top_w=uw.LineBox(connect_dialog_w),
                                       bottom_w=self.app_window,
                                       align=uw.CENTER,
                                       width=(uw.RELATIVE, 50),
